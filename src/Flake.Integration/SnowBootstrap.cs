@@ -189,7 +189,7 @@ internal sealed class SnowOverlay : Window
 
     private readonly Canvas _canvas = new();
     private readonly List<Flake> _flakes = [];
-    private readonly Path _snowbank = new()
+    private readonly System.Windows.Shapes.Path _snowbank = new()
     {
         Fill = new SolidColorBrush(Color.FromArgb(224, 242, 249, 255)),
         IsHitTestVisible = false
@@ -200,7 +200,7 @@ internal sealed class SnowOverlay : Window
     private readonly Random _random = new();
     private readonly SnowSettings _settings;
     private readonly System.Drawing.Rectangle _screenBounds;
-    private readonly Dictionary<IntPtr, Path> _windowSnow = [];
+    private readonly Dictionary<IntPtr, System.Windows.Shapes.Path> _windowSnow = [];
     private readonly DispatcherTimer _windowRefreshTimer =
         new() { Interval = TimeSpan.FromMilliseconds(700) };
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
@@ -387,7 +387,7 @@ internal sealed class SnowOverlay : Window
             visibleWindows.Add(hwnd);
             if (!_windowSnow.TryGetValue(hwnd, out var cap))
             {
-                cap = new Path
+                cap = new System.Windows.Shapes.Path
                 {
                     Fill = new SolidColorBrush(Color.FromArgb(235, 245, 250, 255)),
                     IsHitTestVisible = false
