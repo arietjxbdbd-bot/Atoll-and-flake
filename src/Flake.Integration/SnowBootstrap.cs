@@ -203,6 +203,7 @@ internal sealed class SnowOverlay : Window
     private double _elapsedSeconds;
     private double _nextDensityChange;
     private int _targetParticleCount;
+    private int _snowRenderFrame;
 
     public SnowOverlay(System.Drawing.Rectangle bounds, SnowSettings settings)
     {
@@ -329,8 +330,11 @@ internal sealed class SnowOverlay : Window
             Canvas.SetTop(flake.Shape, y);
         }
 
-        if (snowChanged)
+        if (snowChanged && ++_snowRenderFrame >= 6)
+        {
+            _snowRenderFrame = 0;
             UpdateSnowbank(width, height);
+        }
     }
 
     private void DepositSnow(int segment, double fallingSpeed)
