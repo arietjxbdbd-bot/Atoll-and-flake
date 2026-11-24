@@ -4,7 +4,7 @@
 
 Flake Desktop is a free Windows 10/11 application. The Atoll Dynamic Island codebase is connected to this repository as a pinned Git submodule at `vendor/Atoll`. The build pipeline publishes the Atoll-based Windows app under the Flake Desktop executable name.
 
-> Development status: the first Flake snowfall prototype is being built and validated. It currently draws falling snow on each detected display and supports basic density, speed and wind configuration. It is not yet a complete snow simulation: accumulation, window-edge tracking, melting and interactive objects are still in development.
+> Development status: the first Flake snowfall prototype is being built and validated. It currently draws falling snow on each detected display and supports density, speed and wind configuration, including density that changes over time in Variable mode. It is not yet a complete snow simulation: accumulation, window-edge tracking, melting and interactive objects are still in development.
 
 ## Principles
 
