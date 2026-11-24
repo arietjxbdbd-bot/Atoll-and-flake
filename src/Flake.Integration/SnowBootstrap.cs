@@ -198,7 +198,11 @@ internal sealed class SnowOverlay : Window
     private const double MaxSnowDepth = 38;
     private const double SnowSegmentWidth = 12;
     private readonly Random _random = new();
-    private SnowSettings _settings;
+    private readonly SnowSettings _settings;
+    private readonly System.Drawing.Rectangle _screenBounds;
+    private readonly Dictionary<IntPtr, Path> _windowSnow = [];
+    private readonly DispatcherTimer _windowRefreshTimer =
+        new() { Interval = TimeSpan.FromMilliseconds(700) };
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
     private double _elapsedSeconds;
     private double _nextDensityChange;
@@ -208,6 +212,7 @@ internal sealed class SnowOverlay : Window
     public SnowOverlay(System.Drawing.Rectangle bounds, SnowSettings settings)
     {
         _settings = settings;
+        _screenBounds = bounds;
         Title = "Flake Snow";
         WindowStyle = WindowStyle.None;
         AllowsTransparency = true;
@@ -232,9 +237,19 @@ internal sealed class SnowOverlay : Window
             AddFlake(randomY: true);
 
         SourceInitialized += (_, _) => MakeClickThrough();
-        Loaded += (_, _) => _timer.Start();
-        Closed += (_, _) => _timer.Stop();
+        Loaded += (_, _) =>
+        {
+            _timer.Start();
+            _windowRefreshTimer.Start();
+            RefreshWindowSnow();
+        };
+        Closed += (_, _) =>
+        {
+            _timer.Stop();
+            _windowRefreshTimer.Stop();
+        };
         _timer.Tick += (_, _) => Advance();
+        _windowRefreshTimer.Tick += (_, _) => RefreshWindowSnow();
     }
 
     public void UpdateSettings(SnowSettings settings)
@@ -337,6 +352,79 @@ internal sealed class SnowOverlay : Window
         }
     }
 
+    private void RefreshWindowSnow()
+    {
+        var visibleWindows = new HashSet<IntPtr>();
+        var overlayHandle = new WindowInteropHelper(this).Handle;
+
+        NativeMethods.EnumWindows((hwnd, _) =>
+        {
+            if (hwnd == overlayHandle || !NativeMethods.IsWindowVisible(hwnd))
+                return true;
+
+            if ((NativeMethods.GetWindowLong(hwnd, -20) & 0x80) != 0)
+                return true;
+
+            var className = new System.Text.StringBuilder(256);
+            NativeMethods.GetClassName(hwnd, className, className.Capacity);
+            string classText = className.ToString();
+            if (classText is "Shell_TrayWnd" or "Progman" or "WorkerW" or "Windows.UI.Core.CoreWindow")
+                return true;
+
+            if (!NativeMethods.GetWindowRect(hwnd, out var rect))
+                return true;
+
+            int windowWidth = rect.Right - rect.Left;
+            int windowHeight = rect.Bottom - rect.Top;
+            if (windowWidth < 100 || windowHeight < 60)
+                return true;
+
+            // Ignore windows outside this display and windows that are minimized.
+            if (rect.Right <= _screenBounds.Left || rect.Left >= _screenBounds.Right ||
+                rect.Bottom <= _screenBounds.Top || rect.Top >= _screenBounds.Bottom)
+                return true;
+
+            visibleWindows.Add(hwnd);
+            if (!_windowSnow.TryGetValue(hwnd, out var cap))
+            {
+                cap = new Path
+                {
+                    Fill = new SolidColorBrush(Color.FromArgb(235, 245, 250, 255)),
+                    IsHitTestVisible = false
+                };
+                _windowSnow.Add(hwnd, cap);
+                _canvas.Children.Add(cap);
+                Canvas.SetZIndex(cap, 10);
+            }
+
+            double left = rect.Left - _screenBounds.Left;
+            double top = rect.Top - _screenBounds.Top - 5;
+            double right = rect.Right - _screenBounds.Left;
+            double width = Math.Max(1, right - left);
+            var geometry = new StreamGeometry();
+            using (var context = geometry.Open())
+            {
+                context.BeginFigure(new Point(0, 5), true, true);
+                context.LineTo(new Point(0, 2), true, false);
+                context.QuadraticBezierTo(new Point(width * 0.18, -1), new Point(width * 0.30, 2), true, false);
+                context.QuadraticBezierTo(new Point(width * 0.48, -2), new Point(width * 0.62, 2), true, false);
+                context.QuadraticBezierTo(new Point(width * 0.82, -1), new Point(width, 2), true, false);
+                context.LineTo(new Point(width, 5), true, false);
+            }
+            geometry.Freeze();
+            cap.Data = geometry;
+            Canvas.SetLeft(cap, left);
+            Canvas.SetTop(cap, top);
+            return true;
+        }, IntPtr.Zero);
+
+        foreach (var stale in _windowSnow.Keys.Where(hwnd => !visibleWindows.Contains(hwnd)).ToArray())
+        {
+            _canvas.Children.Remove(_windowSnow[stale]);
+            _windowSnow.Remove(stale);
+        }
+    }
+
     private void DepositSnow(int segment, double fallingSpeed)
     {
         double amount = 0.35 + Math.Min(0.8, fallingSpeed * 0.12);
@@ -370,6 +458,35 @@ internal sealed class SnowOverlay : Window
     }
 
     private sealed record Flake(Ellipse Shape, double Speed, double Drift, double Phase);
+
+    private static class NativeMethods
+    {
+        internal delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        internal static extern bool EnumWindows(EnumWindowsProc callback, IntPtr lParam);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        internal static extern bool IsWindowVisible(IntPtr hwnd);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "GetWindowLongW")]
+        internal static extern int GetWindowLong(IntPtr hwnd, int index);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+        internal static extern int GetClassName(IntPtr hwnd, System.Text.StringBuilder className, int maxCount);
+
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        internal static extern bool GetWindowRect(IntPtr hwnd, out NativeRect rect);
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        internal struct NativeRect
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+    }
 
     [System.Runtime.InteropServices.DllImport("user32.dll", EntryPoint = "GetWindowLongW")]
     private static extern int GetWindowLong(IntPtr hwnd, int index);
