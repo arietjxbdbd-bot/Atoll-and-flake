@@ -32,9 +32,9 @@ internal sealed class SnowSettings
 
     public static SnowSettings Load()
     {
-        string directory = Path.Combine(
+        string directory = System.IO.Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Flake");
-        string path = Path.Combine(directory, "snow-settings.json");
+        string path = System.IO.Path.Combine(directory, "snow-settings.json");
 
         try
         {
@@ -44,8 +44,8 @@ internal sealed class SnowSettings
                 var loaded = JsonSerializer.Deserialize<SnowSettings>(File.ReadAllText(path));
                 if (loaded is not null)
                 {
-                    loaded.Speed = Math.Clamp(loaded.Speed, 0.1, 3.0);
-                    loaded.Wind = Math.Clamp(loaded.Wind, -2.0, 2.0);
+                    loaded.Speed = double.IsFinite(loaded.Speed) ? Math.Clamp(loaded.Speed, 0.1, 3.0) : 1.0;
+                    loaded.Wind = double.IsFinite(loaded.Wind) ? Math.Clamp(loaded.Wind, -2.0, 2.0) : 0.35;
                     return loaded;
                 }
             }
