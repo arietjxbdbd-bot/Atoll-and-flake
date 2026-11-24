@@ -148,6 +148,8 @@ internal sealed class SnowOverlay : Window
     private readonly SnowSettings _settings;
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
     private double _elapsedSeconds;
+    private double _nextDensityChange;
+    private int _targetParticleCount;
 
     public SnowOverlay(System.Drawing.Rectangle bounds, SnowSettings settings)
     {
@@ -167,7 +169,8 @@ internal sealed class SnowOverlay : Window
         Height = bounds.Height;
         Content = _canvas;
 
-        for (int i = 0; i < settings.GetParticleCount(); i++)
+        _targetParticleCount = settings.GetParticleCount();
+        for (int i = 0; i < _targetParticleCount; i++)
             AddFlake(randomY: true);
 
         SourceInitialized += (_, _) => MakeClickThrough();
@@ -205,6 +208,25 @@ internal sealed class SnowOverlay : Window
     private void Advance()
     {
         _elapsedSeconds += _timer.Interval.TotalSeconds;
+
+        // Variable intensity changes gradually during the session instead of choosing
+        // a single random density only at launch.
+        if (_settings.Intensity == SnowIntensity.Variable && _elapsedSeconds >= _nextDensityChange)
+        {
+            _targetParticleCount = _random.Next(45, 151);
+            _nextDensityChange = _elapsedSeconds + _random.Next(4, 9);
+        }
+
+        while (_flakes.Count < _targetParticleCount)
+            AddFlake(randomY: false);
+
+        while (_flakes.Count > _targetParticleCount)
+        {
+            var last = _flakes[^1];
+            _canvas.Children.Remove(last.Shape);
+            _flakes.RemoveAt(_flakes.Count - 1);
+        }
+
         double width = ActualWidth > 0 ? ActualWidth : Width;
         double height = ActualHeight > 0 ? ActualHeight : Height;
         double gust = Math.Sin(_elapsedSeconds * 0.42) * Math.Abs(_settings.Wind) * 0.65;
