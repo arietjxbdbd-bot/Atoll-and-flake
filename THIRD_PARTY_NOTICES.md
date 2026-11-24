@@ -3,10 +3,16 @@
 ## Atoll — Dynamic Island for Windows
 
 - Project: https://github.com/Fuwni/dynamic-island-windows
+- Integrated source: `vendor/Atoll` Git submodule
+- Pinned upstream revision: `012560b3b2138b3d2dfb605e864063204cbe8e4e`
 - Author / copyright holder shown in upstream license: mykolaichechelnytskyi
 - License: MIT
-- Upstream license file: https://github.com/Fuwni/dynamic-island-windows/blob/main/LICENSE
+- Full license text: [licenses/Atoll-MIT.txt](licenses/Atoll-MIT.txt)
 
-The upstream project is licensed under the MIT License. Any Atoll code or substantial portions reused in Flake Desktop must retain the upstream copyright notice and the full MIT license text in distributions. This notice is not a claim of authorship over Atoll.
+Atoll source is included as a pinned Git submodule so the upstream source and its history remain attributable. Clone this repository with submodules enabled:
 
-The upstream license text is maintained in the upstream repository. Before copying or adapting source files, the exact license notice will be included in the relevant distribution and attribution will be preserved.
+```powershell
+git clone --recurse-submodules https://github.com/arietjxbdbd-bot/Atoll-and-flake.git
+```
+
+The upstream copyright and permission notice must be retained in copies or substantial portions of Atoll. This notice does not claim authorship of Atoll.
