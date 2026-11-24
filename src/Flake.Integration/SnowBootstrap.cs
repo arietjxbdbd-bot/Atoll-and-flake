@@ -1,10 +1,10 @@
 using System.Runtime.CompilerServices;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
-using Forms = System.Windows.Forms;
 
 namespace Flake.Integration;
 
