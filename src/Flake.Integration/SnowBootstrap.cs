@@ -32,9 +32,8 @@ internal sealed class SnowSettings
 
     public static SnowSettings Load()
     {
-        string directory = System.IO.Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Flake");
-        string path = System.IO.Path.Combine(directory, "snow-settings.json");
+        string path = GetSettingsPath();
+        string directory = System.IO.Path.GetDirectoryName(path)!;
 
         try
         {
@@ -72,6 +71,13 @@ internal sealed class SnowSettings
         return defaults;
     }
 
+    public static string GetSettingsPath()
+    {
+        string directory = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Flake");
+        return System.IO.Path.Combine(directory, "snow-settings.json");
+    }
+
     public int GetParticleCount()
     {
         return Intensity switch
@@ -93,6 +99,8 @@ internal static class SnowBootstrap
 {
     private static bool _started;
     private static readonly List<SnowOverlay> Overlays = [];
+    private static FileSystemWatcher? _settingsWatcher;
+    private static DispatcherTimer? _settingsReloadTimer;
 
     [ModuleInitializer]
     internal static void Initialize()
@@ -115,8 +123,7 @@ internal static class SnowBootstrap
             try
             {
                 var settings = SnowSettings.Load();
-                if (settings.Intensity == SnowIntensity.Off)
-                    return;
+                StartSettingsWatcher(window.Dispatcher);
 
                 foreach (var screen in Forms.Screen.AllScreens)
                 {
@@ -134,6 +141,44 @@ internal static class SnowBootstrap
             }
         }));
     }
+
+    private static void StartSettingsWatcher(Dispatcher dispatcher)
+    {
+        string path = SnowSettings.GetSettingsPath();
+        string directory = System.IO.Path.GetDirectoryName(path)!;
+        string fileName = System.IO.Path.GetFileName(path);
+
+        _settingsReloadTimer = new DispatcherTimer(
+            TimeSpan.FromMilliseconds(300), DispatcherPriority.Background, (_, _) =>
+            {
+                _settingsReloadTimer?.Stop();
+                try
+                {
+                    var updated = SnowSettings.Load();
+                    foreach (var overlay in Overlays)
+                        overlay.UpdateSettings(updated);
+                }
+                catch
+                {
+                    // Keep the last working settings if the file is temporarily invalid.
+                }
+            }, dispatcher);
+
+        _settingsWatcher = new FileSystemWatcher(directory, fileName)
+        {
+            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.FileName,
+            EnableRaisingEvents = true
+        };
+
+        FileSystemEventHandler changed = (_, _) =>
+            dispatcher.BeginInvoke(new Action(() => _settingsReloadTimer?.Start()));
+        RenamedEventHandler renamed = (_, _) =>
+            dispatcher.BeginInvoke(new Action(() => _settingsReloadTimer?.Start()));
+
+        _settingsWatcher.Changed += changed;
+        _settingsWatcher.Created += changed;
+        _settingsWatcher.Renamed += renamed;
+    }
 }
 
 internal sealed class SnowOverlay : Window
@@ -145,7 +190,7 @@ internal sealed class SnowOverlay : Window
     private readonly Canvas _canvas = new();
     private readonly List<Flake> _flakes = [];
     private readonly Random _random = new();
-    private readonly SnowSettings _settings;
+    private SnowSettings _settings;
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
     private double _elapsedSeconds;
     private double _nextDensityChange;
@@ -177,6 +222,12 @@ internal sealed class SnowOverlay : Window
         Loaded += (_, _) => _timer.Start();
         Closed += (_, _) => _timer.Stop();
         _timer.Tick += (_, _) => Advance();
+    }
+
+    public void UpdateSettings(SnowSettings settings)
+    {
+        _settings = settings;
+        _targetParticleCount = settings.GetParticleCount();
     }
 
     private void MakeClickThrough()
