@@ -1,48 +1,57 @@
 # Flake Desktop
 
-**A winter-themed Windows desktop experience.**
+**A winter-themed Windows desktop experience built around Atoll.**
 
-Flake Desktop is planned as a free Windows 10/11 application combining a Dynamic Island-style interface based on [Atoll](https://github.com/Fuwni/dynamic-island-windows) with interactive snowfall, desktop characters, snowman building and PC management tools.
+Flake Desktop is a free Windows 10/11 application. The Atoll Dynamic Island codebase is now connected to this repository as a pinned Git submodule at `vendor/Atoll`. The build pipeline publishes the Atoll-based Windows app under the Flake Desktop executable name.
 
-> The project is in early development. Features described in the roadmap are planned and are not yet implemented.
+> Important: Atoll source integration and the build pipeline are in progress. Snowfall, penguins, HOT/COLD cursor, snowman building and PC Manager are planned Flake features and are not implemented yet.
 
 ## Principles
 
 - Free to download and use; no paid feature tiers or subscriptions.
-- Keep the complete source code in this public repository alongside release builds.
-- Publish Windows builds through GitHub Releases; a simple project website may link to the latest release.
-- Donations through Telegram Stars are voluntary and do not unlock features.
+- Keep Flake source and the pinned Atoll source reference public.
+- Publish Windows builds through GitHub Actions and GitHub Releases.
+- Donations are voluntary and do not unlock features.
 - Contributions are welcome through issues and pull requests. Official releases remain under maintainer review.
 
-## Planned features
+## Planned Flake features
 
-- Atoll-inspired Dynamic Island interface, integrated into one application.
 - Desktop snowfall with intensity, wind, accumulation, melting and multi-monitor support.
 - Snow accumulation on window edges that follows window movement and resizing.
 - HOT/COLD cursor interaction.
 - Interactive penguins and a cursor-driven snowman builder.
 - Manual snowplow action.
 - PC Manager: installed apps, uninstall flow, storage overview and usage statistics.
-- Windows startup integration and a self-contained Windows executable.
 
-See [ROADMAP.md](docs/ROADMAP.md) for milestones and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution rules.
+## Atoll source
 
-## Development status
+Atoll is included as a pinned submodule:
 
-The repository currently contains the initial project scaffold. Do not treat roadmap items as completed functionality.
+- Upstream: https://github.com/Fuwni/dynamic-island-windows
+- Local path: `vendor/Atoll`
+- Pinned revision: `012560b3b2138b3d2dfb605e864063204cbe8e4e`
 
-## Atoll attribution
-
-The project plans to reuse and adapt parts of Atoll, a Windows Dynamic Island application by [Fuwni](https://github.com/Fuwni/dynamic-island-windows). Atoll is distributed under the MIT License. Its copyright and license notice must be preserved for any reused or adapted portions. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-
-## Building
-
-The desktop application targets Windows and uses WPF on .NET 10. A Windows machine with the .NET 10 SDK is required.
+Clone with source included:
 
 ```powershell
-dotnet build src/Flake.Desktop/Flake.Desktop.csproj -c Release
+git clone --recurse-submodules https://github.com/arietjxbdbd-bot/Atoll-and-flake.git
 ```
 
-## License
+Atoll remains under its upstream MIT license. The full notice is preserved in [licenses/Atoll-MIT.txt](licenses/Atoll-MIT.txt) and attribution details are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-The license for original Flake Desktop code will be selected before the first public release. Third-party components retain their own licenses.
+## Build
+
+On Windows with the .NET 10 SDK:
+
+```powershell
+dotnet restore vendor/Atoll/DynamicIsland.csproj
+dotnet publish vendor/Atoll/DynamicIsland.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:AssemblyName=Flake.Desktop -o artifacts/publish
+```
+
+GitHub Actions runs this publish command automatically. The workflow uploads `Flake.Desktop.exe` as a downloadable artifact. A tagged release (`v*`) publishes the same executable to GitHub Releases.
+
+## Current status
+
+Atoll source is connected; the first integrated build is being validated. The Flake-specific snow features still require implementation and testing.
+
+See [ROADMAP.md](docs/ROADMAP.md) for milestones and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution rules. The license for original Flake code will be selected before the first public release.
