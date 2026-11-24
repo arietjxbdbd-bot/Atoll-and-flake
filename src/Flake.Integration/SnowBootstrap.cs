@@ -198,7 +198,7 @@ internal sealed class SnowOverlay : Window
     private const double MaxSnowDepth = 38;
     private const double SnowSegmentWidth = 12;
     private readonly Random _random = new();
-    private readonly SnowSettings _settings;
+    private SnowSettings _settings;
     private readonly System.Drawing.Rectangle _screenBounds;
     private readonly Dictionary<IntPtr, System.Windows.Shapes.Path> _windowSnow = [];
     private readonly DispatcherTimer _windowRefreshTimer =
