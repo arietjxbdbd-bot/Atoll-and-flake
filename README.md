@@ -2,9 +2,9 @@
 
 **A winter-themed Windows desktop experience built around Atoll.**
 
-Flake Desktop is a free Windows 10/11 application. The Atoll Dynamic Island codebase is now connected to this repository as a pinned Git submodule at `vendor/Atoll`. The build pipeline publishes the Atoll-based Windows app under the Flake Desktop executable name.
+Flake Desktop is a free Windows 10/11 application. The Atoll Dynamic Island codebase is connected to this repository as a pinned Git submodule at `vendor/Atoll`. The build pipeline publishes the Atoll-based Windows app under the Flake Desktop executable name.
 
-> Important: Atoll source integration and the build pipeline are in progress. Snowfall, penguins, HOT/COLD cursor, snowman building and PC Manager are planned Flake features and are not implemented yet.
+> Development status: the first Flake snowfall prototype is being built and validated. It currently draws falling snow on each detected display and supports density, speed and wind configuration, including density that changes over time in Variable mode. It is not yet a complete snow simulation: accumulation, window-edge tracking, melting and interactive objects are still in development.
 
 ## Principles
 
@@ -22,6 +22,28 @@ Flake Desktop is a free Windows 10/11 application. The Atoll Dynamic Island code
 - Interactive penguins and a cursor-driven snowman builder.
 - Manual snowplow action.
 - PC Manager: installed apps, uninstall flow, storage overview and usage statistics.
+
+## Snow prototype configuration
+
+On first launch, the prototype creates:
+
+`%AppData%\Flake\snow-settings.json`
+
+Example:
+
+```json
+{
+  "Intensity": 2,
+  "Speed": 1.0,
+  "Wind": 0.35
+}
+```
+
+- `Intensity`: 0 = Off, 1 = Light, 2 = Steady, 3 = Heavy, 4 = Variable.
+- `Speed`: multiplier from 0.1 to 3.0.
+- `Wind`: direction and strength from -2.0 to 2.0.
+
+These are prototype configuration values, not yet controls in the Atoll settings interface. Restart the application after editing the file.
 
 ## Atoll source
 
@@ -52,6 +74,6 @@ GitHub Actions runs this publish command automatically. The workflow uploads `Fl
 
 ## Current status
 
-Atoll source is connected; the first integrated build is being validated. The Flake-specific snow features still require implementation and testing.
+Atoll source is connected. The first snowfall overlay, multi-display placement and file-based prototype settings are in the feature branch and require CI and real Windows runtime testing. The Flake-specific features listed above are not all implemented.
 
 See [ROADMAP.md](docs/ROADMAP.md) for milestones and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution rules. The license for original Flake code will be selected before the first public release.
