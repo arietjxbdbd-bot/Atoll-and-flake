@@ -43,7 +43,7 @@ Example:
 - `Speed`: multiplier from 0.1 to 3.0.
 - `Wind`: direction and strength from -2.0 to 2.0.
 
-These are prototype configuration values, not yet controls in the Atoll settings interface. Restart the application after editing the file.
+These are prototype configuration values, not yet controls in the Atoll settings interface. Changes are detected while Flake is running and applied automatically after a short delay; no restart is required.
 
 ## Atoll source
 
