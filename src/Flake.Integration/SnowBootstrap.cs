@@ -5,16 +5,18 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using Forms = System.Windows.Forms;
 
 namespace Flake.Integration;
 
 /// <summary>
-/// Early Flake integration prototype. It adds a transparent, click-through snowfall layer
-/// when Atoll's main window is loaded. The overlay is deliberately isolated from Atoll's UI.
+/// Early Flake integration prototype. Creates one transparent snowfall layer per display
+/// when Atoll's main window is loaded. The overlays are isolated from Atoll's UI.
 /// </summary>
 internal static class SnowBootstrap
 {
     private static bool _started;
+    private static readonly List<SnowOverlay> Overlays = [];
 
     [ModuleInitializer]
     internal static void Initialize()
@@ -36,12 +38,19 @@ internal static class SnowBootstrap
         {
             try
             {
-                var overlay = new SnowOverlay();
-                overlay.Show();
+                foreach (var screen in Forms.Screen.AllScreens)
+                {
+                    var overlay = new SnowOverlay(screen.Bounds);
+                    Overlays.Add(overlay);
+                    overlay.Show();
+                }
             }
             catch
             {
                 // Snow is an optional visual layer: it must never prevent Atoll from starting.
+                foreach (var overlay in Overlays)
+                    overlay.Close();
+                Overlays.Clear();
             }
         }));
     }
@@ -59,7 +68,7 @@ internal sealed class SnowOverlay : Window
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
     private const int FlakeCount = 95;
 
-    public SnowOverlay()
+    public SnowOverlay(System.Drawing.Rectangle bounds)
     {
         Title = "Flake Snow";
         WindowStyle = WindowStyle.None;
@@ -70,10 +79,10 @@ internal sealed class SnowOverlay : Window
         Topmost = true;
         ResizeMode = ResizeMode.NoResize;
         IsHitTestVisible = false;
-        Left = 0;
-        Top = 0;
-        Width = SystemParameters.PrimaryScreenWidth;
-        Height = SystemParameters.PrimaryScreenHeight;
+        Left = bounds.Left;
+        Top = bounds.Top;
+        Width = bounds.Width;
+        Height = bounds.Height;
         Content = _canvas;
 
         for (int i = 0; i < FlakeCount; i++)
