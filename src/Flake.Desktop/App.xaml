@@ -1,0 +1,12 @@
+<Application x:Class="Flake.Desktop.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <SolidColorBrush x:Key="WindowBackground" Color="#10151D"/>
+        <SolidColorBrush x:Key="PanelBackground" Color="#1A2431"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#9BDCF5"/>
+        <SolidColorBrush x:Key="PrimaryText" Color="#F3F7FA"/>
+        <SolidColorBrush x:Key="SecondaryText" Color="#A9BAC8"/>
+    </Application.Resources>
+</Application>
