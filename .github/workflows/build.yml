@@ -15,24 +15,32 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Checkout source
+      - name: Checkout Flake and pinned Atoll source
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install .NET 10 SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
 
-      - name: Restore
-        run: dotnet restore src/Flake.Desktop/Flake.Desktop.csproj
+      - name: Restore Atoll-based Flake
+        run: dotnet restore vendor/Atoll/DynamicIsland.csproj
 
-      - name: Build
-        run: dotnet build src/Flake.Desktop/Flake.Desktop.csproj --configuration Release --no-restore
+      - name: Build Atoll-based Flake
+        run: dotnet build vendor/Atoll/DynamicIsland.csproj --configuration Release --no-restore
 
-      - name: Publish self-contained Windows x64 executable
-        run: dotnet publish src/Flake.Desktop/Flake.Desktop.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true --output artifacts/publish
+      - name: Publish single-file self-contained Windows x64 EXE
+        run: dotnet publish vendor/Atoll/DynamicIsland.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:AssemblyName=Flake.Desktop --output artifacts/publish
 
-      - name: Upload executable artifact
+      - name: Verify executable exists
+        shell: pwsh
+        run: |
+          $exe = "artifacts/publish/Flake.Desktop.exe"
+          if (-not (Test-Path $exe)) { throw "Expected executable was not produced: $exe" }
+
+      - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
           name: Flake-Desktop-win-x64
