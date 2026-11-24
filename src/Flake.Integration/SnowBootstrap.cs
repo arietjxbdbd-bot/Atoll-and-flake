@@ -189,6 +189,14 @@ internal sealed class SnowOverlay : Window
 
     private readonly Canvas _canvas = new();
     private readonly List<Flake> _flakes = [];
+    private readonly Path _snowbank = new()
+    {
+        Fill = new SolidColorBrush(Color.FromArgb(224, 242, 249, 255)),
+        IsHitTestVisible = false
+    };
+    private readonly double[] _snowDepth;
+    private const double MaxSnowDepth = 38;
+    private const double SnowSegmentWidth = 12;
     private readonly Random _random = new();
     private SnowSettings _settings;
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(16) };
@@ -213,6 +221,10 @@ internal sealed class SnowOverlay : Window
         Width = bounds.Width;
         Height = bounds.Height;
         Content = _canvas;
+
+        int segmentCount = Math.Max(2, (int)Math.Ceiling(Width / SnowSegmentWidth) + 1);
+        _snowDepth = new double[segmentCount];
+        _canvas.Children.Add(_snowbank);
 
         _targetParticleCount = settings.GetParticleCount();
         for (int i = 0; i < _targetParticleCount; i++)
@@ -283,6 +295,16 @@ internal sealed class SnowOverlay : Window
         double gust = Math.Sin(_elapsedSeconds * 0.42) * Math.Abs(_settings.Wind) * 0.65;
         double wind = _settings.Wind + gust;
 
+        bool snowChanged = false;
+        for (int i = 0; i < _snowDepth.Length; i++)
+        {
+            if (_snowDepth[i] > 0)
+            {
+                _snowDepth[i] = Math.Max(0, _snowDepth[i] - 0.0015);
+                snowChanged = true;
+            }
+        }
+
         foreach (var flake in _flakes)
         {
             double x = Canvas.GetLeft(flake.Shape) + flake.Drift + wind * 0.035;
@@ -290,16 +312,57 @@ internal sealed class SnowOverlay : Window
             double y = Canvas.GetTop(flake.Shape) + flake.Speed;
             x += sway;
 
-            if (y > height + 8)
-            {
-                y = -10;
-                x = _random.NextDouble() * width;
-            }
             if (x < -8) x = width + 4;
             if (x > width + 8) x = -4;
+
+            int segment = Math.Clamp((int)(x / SnowSegmentWidth), 0, _snowDepth.Length - 1);
+            double flakeSize = flake.Shape.Width;
+            if (y + flakeSize >= height - _snowDepth[segment])
+            {
+                DepositSnow(segment, flake.Speed);
+                snowChanged = true;
+                y = -10 - _random.NextDouble() * 20;
+                x = _random.NextDouble() * width;
+            }
+
             Canvas.SetLeft(flake.Shape, x);
             Canvas.SetTop(flake.Shape, y);
         }
+
+        if (snowChanged)
+            UpdateSnowbank(width, height);
+    }
+
+    private void DepositSnow(int segment, double fallingSpeed)
+    {
+        double amount = 0.35 + Math.Min(0.8, fallingSpeed * 0.12);
+        _snowDepth[segment] = Math.Min(MaxSnowDepth, _snowDepth[segment] + amount);
+
+        if (segment > 0)
+            _snowDepth[segment - 1] = Math.Min(MaxSnowDepth, _snowDepth[segment - 1] + amount * 0.22);
+        if (segment < _snowDepth.Length - 1)
+            _snowDepth[segment + 1] = Math.Min(MaxSnowDepth, _snowDepth[segment + 1] + amount * 0.22);
+    }
+
+    private void UpdateSnowbank(double width, double height)
+    {
+        var geometry = new StreamGeometry();
+        using (var context = geometry.Open())
+        {
+            context.BeginFigure(new Point(0, height), true, true);
+            context.LineTo(new Point(0, height - _snowDepth[0]), true, false);
+
+            for (int i = 1; i < _snowDepth.Length; i++)
+            {
+                double x = Math.Min(width, i * SnowSegmentWidth);
+                context.LineTo(new Point(x, height - _snowDepth[i]), true, false);
+            }
+
+            context.LineTo(new Point(width, height), true, false);
+        }
+
+        geometry.Freeze();
+        _snowbank.Data = geometry;
     }
 
     private sealed record Flake(Ellipse Shape, double Speed, double Drift, double Phase);
