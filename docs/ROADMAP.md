@@ -1,50 +1,47 @@
 # Flake Desktop roadmap
 
-This document describes intended work. A feature is not complete until it is implemented and tested.
+A feature is complete only after implementation, Windows runtime testing, and documentation.
 
-## Milestone 0 — Foundation
-- [x] Create public repository and initial source scaffold.
-- [ ] Confirm build on Windows with .NET 10 SDK.
-- [ ] Establish CI build and basic automated checks.
-- [ ] Select a license for original Flake Desktop code.
-- [ ] Document third-party components and notices.
+## Stage 1 — Standalone foundation
+- [x] Separate application shell from the former integration project.
+- [x] Create independent module projects and shared design resources.
+- [x] Add JSON settings persistence.
+- [x] Add navigation shell for all product areas.
+- [ ] Verify clean Windows build and smoke test.
 
-## Milestone 1 — Atoll integration
-- [ ] Audit Atoll architecture, dependencies, assets and startup lifecycle.
-- [ ] Preserve required MIT attribution and license notices.
-- [ ] Integrate the Dynamic Island UI into Flake Desktop.
-- [ ] Add shared state/services for Flake controls.
-- [ ] Verify original Atoll features still work after integration.
+## Stage 2 — Snow engine and desktop overlay
+- [ ] Reusable particle simulation with pooled particle state.
+- [ ] Transparent click-through overlay per monitor.
+- [ ] Density, speed, wind, gusts, flake variants and quality presets.
+- [ ] Low-power idle behavior and frame pacing.
 
-## Milestone 2 — Snow engine
-- [ ] Transparent desktop overlay and multi-monitor handling.
-- [ ] Snowfall modes, particle variation, wind and gusts.
-- [ ] Accumulation, sliding, melting and performance controls.
-- [ ] Window-edge tracking and snow caps that follow moved/resized windows.
+## Stage 3 — Accumulation and window interaction
+- [ ] Screen snowbanks and window-edge surface sampling.
+- [ ] Window movement, resize, close and monitor topology tracking.
+- [ ] Melt, drift and redistribution.
 
-## Milestone 3 — Interactions
-- [ ] HOT/COLD cursor state and triple-click gesture.
-- [ ] Penguins: thawing, movement, reactions and inactivity freezing.
-- [ ] Cursor-driven snowman construction and accessories.
-- [ ] Manual snowplow gesture and clearing behavior.
+## Stage 4 — HOT/COLD
+- [ ] Cursor heat field and melt interaction.
+- [ ] Cold field, slowdown and ice visual effects.
 
-## Milestone 4 — PC Manager
-- [ ] Installed applications inventory.
-- [ ] Safe uninstall flow with confirmation and system-app warnings.
-- [ ] Storage overview.
-- [ ] Usage tracking from the point the feature is enabled.
-- [ ] Clearly distinguish observed usage from unavailable historical data.
+## Stage 5 — Characters and tools
+- [ ] Penguins and behavior state machines.
+- [ ] Snowman builder, accessories and saved designs.
+- [ ] Snow cleaner and targeted/full clear operations.
 
-## Milestone 5 — Release
-- [ ] Windows startup integration and settings persistence.
-- [ ] Self-contained single-file Windows executable.
-- [ ] GitHub Actions build and GitHub Releases workflow.
-- [ ] Free project website with download link.
-- [ ] Privacy, security and end-user documentation.
+## Stage 6 — PC Manager
+- [ ] CPU, memory and disk telemetry.
+- [ ] Process and installed-app inventory.
+- [ ] Windows-native uninstall handoff.
+- [ ] Startup management and confirmed temporary-file cleanup.
 
-## Engineering constraints
+## Stage 7 — Settings and validation
+- [ ] Theme, startup, multi-monitor and performance settings.
+- [ ] Automated tests and Windows 10/11 runtime matrix.
+- [ ] Accessibility, DPI and display-change validation.
 
-- Never claim historical app usage is available when Windows does not expose reliable data for it. Start local usage tracking only after the user enables it.
-- Ask before uninstalling applications; protect or clearly warn about system components.
-- Keep overlays performant and support multiple displays.
-- Keep source code available in the repository for every release.
+## Stage 8 — Release
+- [x] Windows x64 self-contained single-file CI pipeline.
+- [x] EXE existence and size validation in CI.
+- [x] Tag-triggered GitHub Release workflow.
+- [ ] Successful clean CI run and published release.

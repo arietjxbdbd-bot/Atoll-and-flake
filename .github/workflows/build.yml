@@ -2,7 +2,7 @@ name: Build Flake Desktop
 
 on:
   push:
-    branches: [main]
+    branches: [main, "flake/**"]
     tags: ["v*"]
   pull_request:
     branches: [main]
@@ -15,38 +15,30 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - name: Checkout Flake and pinned Atoll source
+      - name: Checkout standalone Flake source
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
       - name: Install .NET 10 SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-
-      - name: Restore Atoll-based Flake
-        run: dotnet restore vendor/Atoll/DynamicIsland.csproj
-
-      - name: Build Atoll-based Flake
-        run: dotnet build vendor/Atoll/DynamicIsland.csproj --configuration Release --no-restore
-
+      - name: Restore
+        run: dotnet restore src/Flake.App/Flake.App.csproj
+      - name: Build
+        run: dotnet build src/Flake.App/Flake.App.csproj --configuration Release --no-restore
       - name: Publish single-file self-contained Windows x64 EXE
-        run: dotnet publish vendor/Atoll/DynamicIsland.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:AssemblyName=Flake.Desktop --output artifacts/publish
-
+        run: dotnet publish src/Flake.App/Flake.App.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:AssemblyName=Flake.Desktop --output artifacts/publish
       - name: Verify executable exists
         shell: pwsh
         run: |
           $exe = "artifacts/publish/Flake.Desktop.exe"
           if (-not (Test-Path $exe)) { throw "Expected executable was not produced: $exe" }
-
+          if ((Get-Item $exe).Length -lt 1MB) { throw "Published executable is unexpectedly small." }
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
           name: Flake-Desktop-win-x64
           path: artifacts/publish/Flake.Desktop.exe
           if-no-files-found: error
-
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
