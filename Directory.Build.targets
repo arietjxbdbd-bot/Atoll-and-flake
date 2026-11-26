@@ -1,6 +1,0 @@
-<Project>
-  <!-- Compile Flake-owned integration code into the Atoll application without modifying the upstream submodule. -->
-  <ItemGroup Condition="'$(MSBuildProjectName)' == 'DynamicIsland'">
-    <Compile Include="$(MSBuildThisFileDirectory)src/Flake.Integration/**/*.cs" />
-  </ItemGroup>
-</Project>
